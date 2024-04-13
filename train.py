@@ -1,4 +1,4 @@
-from MLP import MLP
+import MLP
 import data
 import torch
 import plotly.graph_objects as go
