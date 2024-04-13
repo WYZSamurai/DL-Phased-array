@@ -40,8 +40,8 @@ def plot(Fdb: torch.Tensor, delta: int, theta_min: float, theta_max: float):
         template="simple_white",
         title="方向图",
         xaxis_title="theta",
-        xaxis_range=[theta_min-10, theta_max+10],
         yaxis_title="Fdb",
+        xaxis_range=[theta_min-10, theta_max+10],
         yaxis_range=[-60, 0.5],
     )
     fig.show()

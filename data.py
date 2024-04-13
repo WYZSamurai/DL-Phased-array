@@ -22,7 +22,7 @@ def spl_data(batch_size: int):
 
 
 # 输入数据
-def inputdata(batch_size:int):
+def inputdata(batch_size: int):
     # (n,1)
     direction = torch.randint(40, 141, size=(batch_size,))
     # (n,1)
