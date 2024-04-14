@@ -1,62 +1,58 @@
+import torch
 import MLP
 import data
-import torch
-import plotly.graph_objects as go
 
 
-def train():
-    # 建立深度网络模型
-    model = MLP().double()
-    # 数据生成
-    x_train, x_test, y_train, y_test = data.spl_data(4)
-    # 优化器选择
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=2.5e-5, weight_decay=1e-5)
-    # 损失函数选择
-    lossfunction = torch.nn.MSELoss()
+def train(model: MLP.MLP, device: torch.device, criterion: torch.nn.MSELoss, optimizer: torch.optim.Adam, num_epochs: int, batch_size: int, delta: int, lamb: float, d: float, theta_0: float, best_model_path: str):
+    # 最佳损失值
+    best_loss = float("inf")
+    # 训练模式
+    model.train()
 
-    # 设置迭代周期数
-    epochs = 1000
-    sum_loss = 0
-    temp = 1000
-    # 记录每次迭代的loss值
-    loss_y = torch.zeros(size=(epochs,), dtype=torch.float64)
-    for epoch in range(epochs):
-        # 前向传播
-        y_pre = model(x_train)
-        print(y_pre.shape)
-        # 优化器梯度清零
+    for epoch in range(num_epochs):
+        # 生成数据
+        inputs = data.generate(batch_size, delta).to(device)
+        # 优化器清零梯度
         optimizer.zero_grad()
+        # 输出参数
+        outputs: torch.Tensor = model(inputs)
+        # 阵元数
+        NE = int(outputs.shape[1]/2)
+        # 生成Fdb数据
+        transformed_outputs = data.pattern(
+            outputs[:, :NE], outputs[:, NE:], lamb, d, delta, theta_0)
         # 计算损失值
-        loss = lossfunction(y_pre, y_train)
-        # 后向传播
+        loss: torch.Tensor = criterion(transformed_outputs, inputs)
+        # 向后传播
         loss.backward()
-        # 模型更新参数
+        # 优化器步进
         optimizer.step()
-        # 如果loss比前一次大就停止
-        if temp > loss.item():
-            sum_loss += loss.item()
-            temp = loss.item()
-            # 记录每次loss值
-            loss_y[epoch] = loss.item()
-        else:
-            break
-        print("loss=", loss.item())
-        print("epoch = ", epoch+1)
-    avg_loss = sum_loss/epochs
-    print("avg_loss=", avg_loss)
-    return loss_y
+        # 保存最佳模型
+        if loss.item() < best_loss:
+            best_loss = loss.item()
+            torch.save(model.state_dict(), best_model_path)
+            print("最佳模型更新")
+
+        print(f"已迭代 {epoch+1}代, 损失值: {loss.item()}")
 
 
-if __name__ == "__main__":
-    x = torch.linspace(0, 999, 1000)
-    y = train()
-
-    fig = go.Figure()
-    fig.add_traces(
-        go.Scatter(
-            x=x,
-            y=y,
-        )
-    )
-    fig.show()
+def evaluate(model: MLP.MLP, criterion: torch.nn.MSELoss, batch_size: int, delta: int, model_path: str, lamb: float, d: float, theta_0: float, device: torch.device):
+    # 载入模型
+    model.load_state_dict(torch.load(model_path))
+    # 评估模式
+    model.eval()
+    with torch.no_grad():
+        # 生成测试数据
+        inputs = data.generate(batch_size, delta).to(device)
+        # 生成结果
+        outputs: torch.Tensor = model(inputs)
+        NE = int(outputs.shape[1]/2)
+        # 转换结果
+        transformed_outputs = data.pattern(
+            outputs[:, :NE], outputs[:, NE:], lamb, d, delta, theta_0)
+        # 计算损失值
+        loss: torch.Tensor = criterion(transformed_outputs, inputs)
+    # 绘制第一个方向图的结果
+    data.plot(inputs[0])
+    data.plot(transformed_outputs[0])
+    print(f'评估损失值: {loss.item()}')

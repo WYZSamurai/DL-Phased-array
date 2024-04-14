@@ -1,14 +1,53 @@
-import data1
+# x(batch_size,delta)
+# y(batch_size,2*NE)
 
 
-theta_max = 180
-theta_min = 0
-scale = 2
-batch_size = 3
-Fdb, theta = data1.generate(batch_size, scale, theta_max, theta_min)
-delta = theta.shape[0]
-# print(delta)
-# print(Fdb)
+import torch
+import MLP
+import train
 
-for i in range(Fdb.shape[0]):
-    data1.plot(theta, Fdb[i], theta_max, theta_min)
+
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+# device = torch.device("cpu")
+
+
+# theta范围
+# theta_max = 90.0
+# theta_min = -90.0
+
+
+theta0 = 0.0
+lamb = 1.0
+d = 0.5*lamb
+# 缩放倍数
+scale = 1
+delta = scale*180
+# 训练批数
+batch_size = 1000
+# 阵元数
+NE = 24
+
+
+# 模型
+model = MLP.MLP(delta, 128, 64, 32, 2*NE).to(device)
+# 损失函数（需要更新）
+criterion = torch.nn.MSELoss()
+# 优化器
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+
+best_model_path = "best model.pth"
+
+
+# 训练过程
+num_epochs = 100
+train.train(model, device, criterion, optimizer, num_epochs,
+            batch_size, delta, lamb, d, theta0, best_model_path)
+
+
+# 评估过程
+train.evaluate(model, criterion, batch_size, delta,
+               best_model_path, lamb, d, theta0, device)

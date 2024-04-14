@@ -1,49 +1,87 @@
 import torch
-from sklearn.model_selection import train_test_split
+import plotly.graph_objects as go
 
 
-# 建立数据集
-def generator(batch_size: int):
-    x = torch.zeros(size=(batch_size, 181), dtype=torch.float64)
-    y = torch.zeros(size=(batch_size, 48), dtype=torch.float64)
-    for i in range(batch_size):
-        temp_x = 100 * torch.rand(size=(181,), dtype=torch.float64)
-        temp_y = torch.rand(size=(48,), dtype=torch.float64)
-        x[i] = temp_x
-        y[i] = temp_y
-    return x, y
+# 生成理想的方向图
+def generate(batch_size: int, delta: int):
+    scale = int(delta/180)
+    # (batch_size,)[-50,50]
+    direction = scale*torch.randint(40, 141, (batch_size,))
+    # (batch_size,)[-30,-20]
+    sll = -1*(torch.randint(20, 30, size=(batch_size,),
+              dtype=(torch.float))+torch.rand(batch_size,))
+    # (batch_size,)[20,30]
+    width = (-sll/2).to(dtype=torch.int)
+
+    Fdb = torch.ones(batch_size, delta) * sll.unsqueeze(1)
+
+    # 生成mask矩阵
+    indexes = torch.arange(delta).unsqueeze(0).repeat(
+        batch_size, 1)  # 生成0到delta-1的索引并复制成(batch_size, delta)形状
+    lower_bounds = (direction - width).unsqueeze(1)
+    upper_bounds = (direction + width).unsqueeze(1)
+    mask = (indexes >= lower_bounds) & (indexes <= upper_bounds)  # 创建布尔掩码
+
+    Fdb[mask] = 0  # 使用掩码将指定位置置0
+    return Fdb
 
 
-# 分割数据集
-def spl_data(batch_size: int):
-    x, y = generator(batch_size=batch_size)
-    x_train, x_test, y_train, y_test = train_test_split(x, y)
-    return x_train, x_test, y_train, y_test
+# 根据相位和激励计算线阵方向图
+def pattern(mag: torch.Tensor, phase_0: torch.Tensor, lamb: float, d: float, delta: int, theta_0: float):
+    # mag/phase_0(batch_size,m)
+    m = mag.shape[1]
+    pi = torch.pi
+    k = 2 * pi / lamb
+
+    theta_0_rad = torch.tensor(theta_0) * pi / 180
+    theta = torch.linspace(-pi / 2, pi / 2, delta,
+                           device=mag.device)  # 生成theta并指定设备
+
+    # phi(delta,)
+    phi = (torch.sin(theta) - torch.sin(theta_0_rad)
+           ).unsqueeze(0).to(mag.device)  # 增加一个维度，以便与dm进行广播
+
+    # nd(m,)
+    # 将向量变为列向量进行广播
+    dm = k * d * torch.arange(0, m, device=mag.device).unsqueeze(1)
+
+    # 计算每个批次所有m值和所有delta值的所有相位
+    # 广播以创建相位值的（batch_size，m，delta）矩阵
+    phase = phase_0.unsqueeze(2) + dm * phi
+
+    # 使用欧拉公式将相位转换为复数并求和
+    # 广播mag到（batch_size，m，delta）
+    complex_exponential = mag.unsqueeze(
+        2) * torch.exp(torch.complex(torch.zeros_like(phase), phase))
+    # 沿m维度求和，取大小
+    F = torch.sum(complex_exponential, dim=1).abs()
+
+    # 转换为db，按批次中每个个体的最大值进行归一化
+    Fdb = 20 * torch.log10(F / F.max(dim=1, keepdim=True).values)
+
+    return Fdb
 
 
-# 输入数据
-def inputdata(batch_size: int):
-    # (n,1)
-    direction = torch.randint(40, 141, size=(batch_size,))
-    # (n,1)
-    sll = torch.randint(21, 30, size=(batch_size, 1))
-    # (n,181)
-    perceptual = -1 * sll * torch.ones(size=(batch_size, 181))
-    for i in range(batch_size):
-        width = sll[i]
-        perceptual[i, direction[i]-1-width:direction[i]+width] = 0
-    return direction, perceptual
-
-
-# n元阵方向图叠加
-# mag(n,181) ang(n,181)
-def arg(mag: torch.Tensor, ang: torch.Tensor, element_num=24,):
-    # 方向图乘积
-    E = torch.zeros(size=(181,), dtype=torch.float64)
-    for i in range(element_num):
-        E = E+mag[i]*torch.exp(1j*((i+1)*torch.pi+(ang[i]/180)))
-    E = torch.abs(E)
-    return E
+# 绘图
+def plot(Fdb: torch.Tensor):
+    delta = Fdb.shape[0]
+    theta = torch.linspace(-90.0, 90.0, delta)
+    fig = go.Figure()
+    fig.add_traces(
+        go.Scatter(
+            x=theta,
+            y=Fdb.to(torch.device("cpu")),
+        )
+    )
+    fig.update_layout(
+        template="simple_white",
+        title="方向图",
+        xaxis_title="theta",
+        yaxis_title="Fdb",
+        xaxis_range=[-100.0, 100.0],
+        yaxis_range=[-60, 0.5],
+    )
+    fig.show()
 
 
 if __name__ == "__main__":
