@@ -9,6 +9,8 @@ def train(model: MLP.MLP, device: torch.device,  optimizer: torch.optim.Adam, nu
     best_loss = float("inf")
     # 训练模式
     model.train()
+    # 建立损失集
+    losses = torch.zeros(num_epochs,)
 
     for epoch in range(num_epochs):
         # 生成数据
@@ -25,7 +27,8 @@ def train(model: MLP.MLP, device: torch.device,  optimizer: torch.optim.Adam, nu
             outputs[:, :NE], outputs[:, NE:], lamb, d, delta, theta_0)
         # 计算损失值
         loss = lossfunc.total_loss(transformed_outputs, inputs, mask)
-        # loss: torch.Tensor = criterion(transformed_outputs, inputs)
+        print(f"已迭代 {epoch+1}代, 损失值: {loss.item()}")
+        losses[epoch] = loss.clone()
         # 向后传播
         loss.backward()
         # 优化器步进
@@ -36,7 +39,7 @@ def train(model: MLP.MLP, device: torch.device,  optimizer: torch.optim.Adam, nu
             torch.save(model.state_dict(), best_model_path)
             print("最佳模型更新")
 
-        print(f"已迭代 {epoch+1}代, 损失值: {loss.item()}")
+    return best_loss, losses
 
 
 def evaluate(model: MLP.MLP, batch_size: int, delta: int, model_path: str, lamb: float, d: float, theta_0: float, device: torch.device):

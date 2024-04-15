@@ -60,6 +60,6 @@ def total_loss(transformed_outputs: torch.Tensor, inputs: torch.Tensor, mask: to
     loss_msll: torch.Tensor = lossfun(
         msll(transformed_outputs, mask), msll(inputs, mask))
 
-    (w1, w2) = (1, 1)
+    (w1, w2) = (0.8, 0.2)
 
     return w1*loss_mll+w2*loss_msll

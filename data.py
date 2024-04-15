@@ -5,10 +5,12 @@ import plotly.graph_objects as go
 # 生成理想的方向图
 def generate(batch_size: int, delta: int):
     scale = int(delta/180)
-    direction = scale*torch.randint(40, 141, (batch_size,))
-    sll = -1*(torch.randint(20, 30, size=(batch_size,),
+    # [-50,50]
+    direction = scale*torch.randint(90+(-50), 90+(50), (batch_size,))
+    # [-20,-30]
+    sll = -1*(torch.randint(20, 31, size=(batch_size,),
               dtype=(torch.float))+torch.rand(batch_size,))
-    width = (-sll/2).to(dtype=torch.int)
+    width = ((-sll/20)*(7*scale)).to(dtype=torch.int)
     # Fdb(batch_size, delta)
     Fdb = torch.ones(batch_size, delta) * sll.unsqueeze(1)
 
