@@ -33,8 +33,6 @@ NE = 24
 
 # 模型
 model = MLP.MLP(delta, 128, 64, 32, 2*NE).to(device)
-# 损失函数（需要更新）
-criterion = torch.nn.MSELoss()
 # 优化器
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
@@ -43,11 +41,11 @@ best_model_path = "best model.pth"
 
 
 # 训练过程
-num_epochs = 100
-train.train(model, device, criterion, optimizer, num_epochs,
+num_epochs = 1000
+train.train(model, device, optimizer, num_epochs,
             batch_size, delta, lamb, d, theta0, best_model_path)
 
 
 # 评估过程
-train.evaluate(model, criterion, batch_size, delta,
+train.evaluate(model, batch_size, delta,
                best_model_path, lamb, d, theta0, device)

@@ -5,14 +5,11 @@ import plotly.graph_objects as go
 # 生成理想的方向图
 def generate(batch_size: int, delta: int):
     scale = int(delta/180)
-    # (batch_size,)[-50,50]
     direction = scale*torch.randint(40, 141, (batch_size,))
-    # (batch_size,)[-30,-20]
     sll = -1*(torch.randint(20, 30, size=(batch_size,),
               dtype=(torch.float))+torch.rand(batch_size,))
-    # (batch_size,)[20,30]
     width = (-sll/2).to(dtype=torch.int)
-
+    # Fdb(batch_size, delta)
     Fdb = torch.ones(batch_size, delta) * sll.unsqueeze(1)
 
     # 生成mask矩阵
@@ -20,10 +17,12 @@ def generate(batch_size: int, delta: int):
         batch_size, 1)  # 生成0到delta-1的索引并复制成(batch_size, delta)形状
     lower_bounds = (direction - width).unsqueeze(1)
     upper_bounds = (direction + width).unsqueeze(1)
+    # 主瓣位置
+    # mask(batch_size, delta)
     mask = (indexes >= lower_bounds) & (indexes <= upper_bounds)  # 创建布尔掩码
 
     Fdb[mask] = 0  # 使用掩码将指定位置置0
-    return Fdb
+    return Fdb, mask
 
 
 # 根据相位和激励计算线阵方向图
@@ -82,7 +81,3 @@ def plot(Fdb: torch.Tensor):
         yaxis_range=[-60, 0.5],
     )
     fig.show()
-
-
-if __name__ == "__main__":
-    pass
