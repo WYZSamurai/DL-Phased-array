@@ -50,7 +50,6 @@ def pattern(mag: torch.Tensor, phase_0: torch.Tensor, lamb: float, d: float, del
     # 广播以创建相位值的（batch_size，m，delta）矩阵
     phase = phase_0.unsqueeze(2) + dm * phi
 
-    # 使用欧拉公式将相位转换为复数并求和
     # 广播mag到（batch_size，m，delta）
     complex_exponential = mag.unsqueeze(
         2) * torch.exp(torch.complex(torch.zeros_like(phase), phase))
