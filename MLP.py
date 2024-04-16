@@ -15,7 +15,3 @@ class MLP(nn.Module):
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
         return self.fc4(x)
-
-
-if __name__ == "__main__":
-    pass
