@@ -2,8 +2,10 @@ import torch
 import plotly.graph_objects as go
 
 
-# 生成理想的方向图
 def generate(batch_size: int, delta: int):
+    """
+    生成理想的方向图
+    """
     scale = int(delta/180)
     # [-50,50]
     direction = scale*torch.randint(90+(-50), 90+(50), (batch_size,))
@@ -27,8 +29,10 @@ def generate(batch_size: int, delta: int):
     return Fdb, mask
 
 
-# 根据相位和激励计算线阵方向图
 def pattern(mag: torch.Tensor, phase_0: torch.Tensor, lamb: float, d: float, delta: int, theta_0: float):
+    """
+    根据相位和激励计算线阵方向图
+    """
     # mag/phase_0(batch_size,m)
     m = mag.shape[1]
     pi = torch.pi
@@ -62,8 +66,10 @@ def pattern(mag: torch.Tensor, phase_0: torch.Tensor, lamb: float, d: float, del
     return Fdb
 
 
-# 绘图
 def plot(Fdb: torch.Tensor):
+    """
+    绘图
+    """
     delta = Fdb.shape[0]
     theta = torch.linspace(-90.0, 90.0, delta)
     fig = go.Figure()
