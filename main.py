@@ -35,6 +35,7 @@ NE = 24
 
 # 模型
 model = MLP.MLP(delta, 128, 64, 32, 2*NE).to(device)
+print(model)
 # 优化器
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
