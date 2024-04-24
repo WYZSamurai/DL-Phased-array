@@ -63,7 +63,7 @@ while True:
         )
         fig.update_layout(
             template="simple_white",
-            title="方向图",
+            title="损失函数",
             xaxis_title="epochs",
             yaxis_title="loss",
         )
