@@ -16,12 +16,12 @@ def total_loss(transformed_outputs: torch.Tensor, inputs: torch.Tensor, mask: to
     """
     计算总损失值(主瓣MSE和MSLL)
     """
-    lossfun = torch.nn.MSELoss(reduction="mean")
+    mse_loss = torch.nn.MSELoss(reduction="mean")
     # (batch_size,)
-    loss_mll: torch.Tensor = lossfun(transformed_outputs[mask], inputs[mask])
+    loss_mll: torch.Tensor = mse_loss(transformed_outputs[mask], inputs[mask])
 
     MSLL = msll(transformed_outputs, mask)
-    loss_msll: torch.Tensor = lossfun(MSLL, torch.zeros_like(MSLL)-50)
+    loss_msll: torch.Tensor = mse_loss(MSLL, torch.zeros_like(MSLL)-50)
 
     (w1, w2) = (0.5, 0.5)
 
