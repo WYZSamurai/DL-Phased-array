@@ -40,7 +40,7 @@ print(model)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 # 保存路径
-best_model_path = "best model.pth"
+best_model_path = "best model main.pth"
 
 
 first = 0
