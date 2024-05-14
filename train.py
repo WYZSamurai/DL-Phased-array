@@ -5,13 +5,16 @@ import lossfunc
 
 
 def train(model: MLP.MLP, device: torch.device,  optimizer: torch.optim.Adam, num_epochs: int, batch_size: int, delta: int, lamb: float, d: float, theta_0: float, best_model_path: str, first: int, bestloss: float):
-    # 最佳损失值
-    best_loss = float("inf")
+    # 如果不是第一次，加载最佳模型
+    if first > 0:
+        model.load_state_dict(torch.load(best_model_path))
+    # 加载最佳损失值，第一次为无穷大
+    best_loss = bestloss
     # 训练模式
     model.train()
     # 建立损失集
     losses = torch.zeros(num_epochs,)
-
+    # 每一批数据进行训练
     for epoch in range(num_epochs):
         # 生成数据
         inputs, mask = data.generate(batch_size, delta)
