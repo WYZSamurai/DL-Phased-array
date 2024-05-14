@@ -4,7 +4,7 @@ import data
 import lossfunc
 
 
-def train(model: MLP.MLP, device: torch.device,  optimizer: torch.optim.Adam, num_epochs: int, batch_size: int, delta: int, lamb: float, d: float, theta_0: float, best_model_path: str):
+def train(model: MLP.MLP, device: torch.device,  optimizer: torch.optim.Adam, num_epochs: int, batch_size: int, delta: int, lamb: float, d: float, theta_0: float, best_model_path: str, first: int, bestloss: float):
     # 最佳损失值
     best_loss = float("inf")
     # 训练模式
