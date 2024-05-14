@@ -28,7 +28,7 @@ delta = scale*180
 # 训练批数
 batch_size = 1000
 # 训练次数
-num_epochs = 1000
+num_epochs = 20000
 # 阵元数
 NE = 24
 
