@@ -6,13 +6,21 @@ def generate(batch_size: int, delta: int):
     """
     生成理想的方向图
     """
+    # 可调参数
     scale = int(delta/180)
-    # [-50,50]
-    direction = scale*torch.randint(90+(-50), 90+(50), (batch_size,))
-    # [-20,-30]
-    sll = -1*(torch.randint(20, 31, size=(batch_size,),
+    a = 35  # 越大波束越窄
+    # 电平范围
+    slll = 25
+    sllh = 30
+    # 指向范围
+    tl = 0
+    th = 1
+    # 主瓣指向
+    direction = scale*torch.randint(90+tl, 90+th, (batch_size,))
+    # 副瓣电平
+    sll = -1*(torch.randint(slll, sllh, size=(batch_size,),
               dtype=(torch.float))+torch.rand(batch_size,))
-    width = ((-sll/20)*(7*scale)).to(dtype=torch.int)
+    width = ((-sll/a)*(7*scale)).to(dtype=torch.int)
     # Fdb(batch_size, delta)
     Fdb = torch.ones(batch_size, delta) * sll.unsqueeze(1)
 
@@ -68,7 +76,7 @@ def pattern(mag: torch.Tensor, phase_0: torch.Tensor, lamb: float, d: float, del
 
 def plot(Fdb: torch.Tensor):
     """
-    绘图
+    绘图(FdB大小为(delta,))
     """
     delta = Fdb.shape[0]
     theta = torch.linspace(-90.0, 90.0, delta)

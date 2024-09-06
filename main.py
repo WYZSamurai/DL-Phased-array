@@ -6,6 +6,8 @@ import torch
 import MLP
 import train
 import plotly.graph_objects as go
+import data
+import numpy as np
 
 
 if torch.cuda.is_available():
@@ -19,7 +21,7 @@ else:
 # theta_min = -90.0
 
 
-theta0 = 0.0
+theta0 = -70.0
 lamb = 1.0
 d = 0.5*lamb
 # 缩放倍数
@@ -30,7 +32,7 @@ batch_size = 1000
 # 训练次数
 num_epochs = 15000
 # 阵元数
-NE = 24
+NE = 16
 
 
 # 模型
@@ -54,6 +56,7 @@ while True:
         best_loss, losses = train.train(
             model, device, optimizer, num_epochs, batch_size, delta, lamb, d, theta0, best_model_path, first, bestloss)
         bestloss = best_loss
+        # 第一次不加载最佳模型
         first = 1+first
         print("训练阶段最佳损失值为：", best_loss)
 
@@ -75,7 +78,16 @@ while True:
         fig.show()
     if Op == 2:
         # 评估过程
-        train.evaluate(model, batch_size, delta,
-                       best_model_path, lamb, d, theta0, device)
+        inputs, transformed_outputs = train.evaluate(
+            model, batch_size, delta, best_model_path, lamb, d, theta0, device)
+
+        print(transformed_outputs)
+        export = transformed_outputs.to(torch.device("cpu")).numpy()
+        np.savetxt("C:/Users/wyz96/Doc/Term3/2408/副瓣抑制/export/Opt.csv", export)
+
+        # 绘制第一个方向图的结果
+        data.plot(inputs)
+        data.plot(transformed_outputs)
+
     if Op == 0:
         break

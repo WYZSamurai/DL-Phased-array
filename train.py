@@ -63,7 +63,5 @@ def evaluate(model: MLP.MLP, batch_size: int, delta: int, model_path: str, lamb:
         # 计算损失值
         loss = lossfunc.total_loss(transformed_outputs, inputs, mask)
         # loss: torch.Tensor = criterion(transformed_outputs, inputs)
-    # 绘制第一个方向图的结果
-    data.plot(inputs[0])
-    data.plot(transformed_outputs[0])
-    print(f'评估损失值: {loss.item()}')
+        print(f'评估损失值: {loss.item()}')
+    return inputs[0], transformed_outputs[0]
